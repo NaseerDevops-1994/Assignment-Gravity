@@ -1,0 +1,46 @@
+pipeline {
+    agent any
+    environment {
+        EC2_IP = ''
+        SSH_CREDENTIALS_ID = ''
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/NaseerDevops-1994/Assignment-Gravity.git'
+            }
+        }
+        stage('Build') {
+            steps {
+                
+                sh 'echo "Building application..."'
+            }
+        }
+        stage('Test') {
+            steps {
+           
+                sh 'echo "Running tests..."'
+               
+                sh 'exit 0'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                sshagent(credentials: [SSH_CREDENTIALS_ID]) {
+                    sh """
+                    scp -o StrictHostKeyChecking=no -r * ec2-user@${EC2_IP}:/var/www/html
+                    ssh -o StrictHostKeyChecking=no ec2-user@${EC2_IP} 'sudo systemctl restart nginx'
+                    """
+                }
+            }
+        }
+    }
+    post {
+        success {
+            echo 'Deployment successful'
+        }
+        failure {
+            echo 'Deployment failed'
+        }
+    }
+}
